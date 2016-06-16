@@ -7,8 +7,8 @@
   "BSD3 License"
 
 C header library for access the CPU timestamp cycle counter (TSC) on x86-64. If
-not familar with using the `TSC` for benchmarking, refer to the
-[Intel whitepaper][intel1] This is designed to be used for benchmarking code,
+not familar with using the TSC for benchmarking, refer to the
+[Intel whitepaper][intel1]. This is designed to be used for benchmarking code,
 so takes steps to prevent instruction reordering across measurement boundaries
 by the CPU.
 
