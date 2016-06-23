@@ -1,10 +1,14 @@
-// Support for using the TSC register on intel machines as a timing method.
-//
-// Should compile with -O to ensure inline attribute is honoured.
-//
+#ifndef TSC_H
+#define TSC_H
 
-#ifndef __TSC_HDR
-#define __TSC_HDR
+/**
+ * tsc.h - support for using the TSC register on intel machines as a timing
+ * method. Should compile with -O to ensure inline attribute is honoured.
+ *
+ * author: David Terei <code@davidterei.com>
+ * copyright: Copyright (c) 2016, David Terei
+ * license: BSD
+ */
 
 #include <stdint.h>
 
@@ -55,4 +59,4 @@ static uint64_t measure_tsc_overhead(void)
   return overhead;
 }
 
-#endif /* __TSC_HDR */
+#endif /* TSC_H */
