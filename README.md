@@ -40,21 +40,91 @@ write up on the issues can be found at the [gotsc][gotsc] project.
 To convert from cycles to wall-clock time we need to know TSC frequency
 Frequency scaling on modern Intel chips doesn't affect the TSC.
 
-Sadly, there doesn't seem to be a good way to do this. From Intel V3B, 17.14:
+Sadly, the only way to determine the TSC frequency appears to be through a MSR
+using the `rdmsr` instruction. This instruction is privileged and can't be
+executed from user-space.
 
-> That rate may be set by the maximum core-clock to bus-clock ratio of the
-> processor or may be set by the maximum resolved frequency at which the
-> processor is booted. The maximum resolved frequency may differ from the
-> processor base frequency, see Section 18.15.5 for more detail. On certain
-> processors, the TSC frequency may not be the same as the frequency in the
-> brand string.
+If we could, we want to access the `MSR_PLATFORM_INFO`:
 
-Linux appears to deteremine the TSC clock speed through a [calibration] [lxr3]
-against hardware timers.
+> Register Name: MSR_PLATFORM_INFO [15:8]
+> Description: Package Maximum Non-Turbo Ratio (R/O)
+>              The is the ratio of the frequency that invariant TSC runs at.
+>              Frequency = ratio * 100 MHz.
 
-However, another project claims that the ratio of TSC clock to bus clock can be
-read from `MSR_PLATFORM_INFO[15:8]` (see Intel 64 and IA-32 Architectures
-Software Developer’s Manual, Vol. 3C 35-53 (pag. 2852)). Need to check this.
+The multiplicative factor of `100 MHz` varies across architectures. Luckily, it
+appears to be `100 MHz` on all Intel architectures except Nehalem, for which it
+is `133.3 MHz`.
+
+If this method fails or is unavailable, Linux appears to determine the TSC
+clock speed through a [calibration] [lxr3] against hardware timers.
+
+For now, we don't provide the ability to convert cycles to time.
+
+## Intel TSC Documentation
+
+Using `CPUID`
+
+> CPUID.01H : ECX.SSE[bit 25] = 1
+> Issue: `CPUID` with value `01H` in register `EAX`
+> Output: Value in `ECX`, check bit `25` is `1` indicating `SSE` support
+
+For example:
+
+        static inline bool check_rdtscp(void)
+        {
+          unsigned cpu;
+          asm("mov $80000001H, %%rax\n\t"
+              "cpuid\n\t"
+              : "=d"(cpu)
+              :: "%rax", "%rdx"
+              );
+          return ( cpu & (1<<27) );
+        }
+
+TSC Flag:
+
+> CPUID.1:EDX.TSC[bit 4] = 1.
+
+Invariant TSC:
+
+> The time stamp counter in newer processors may support an enhancement,
+> referred to as invariant TSC.  Processor’s support for invariant TSC is
+> indicated by CPUID.80000007H:EDX[8].  The invariant TSC will run at a
+> constant rate in all ACPI P-, C-. and T-states.  This is the architectural
+> behavior moving forward.  On processors with invariant TSC support, the OS
+> may use the TSC for wall clock timer services (instead of ACPI or HPET
+> timers). TSC reads are much more efficient and do not incur the overhead
+> associated with a ring transition or access to a platform resource.
+
+`IA32_TSC_AUX` Register and `RDTSCP` Support:
+
+> Processors based on Intel microarchitecture code name Nehalem provide an
+> auxiliary TSC register, IA32_TSC_AUX that is designed to be used in conjunction
+> with IA32_TSC. IA32_TSC_AUX provides a 32-bit field that is initialized by
+> privileged software with a signature value (for example, a logical processor
+> ID).  The primary usage of IA32_TSC_AUX in conjunction with IA32_TSC is to
+> allow software to read the 64-bit time stamp in IA32_TSC and signature value in
+> IA32_TSC_AUX with the instruction RDTSCP in an atomic operation.  RDTSCP
+> returns the 64-bit time stamp in EDX:EAX and the 32-bit TSC_AUX signature value
+> in ECX. The atomicity of RDTSCP ensures that no context switch can occur
+> between the reads of the TSC and TSC_AUX values.  Support for RDTSCP is
+> indicated by CPUID.80000001H:EDX[27]. As with RDTSC instruction, non-ring 0
+> access is controlled by CR4.TSD (Time Stamp Disable flag).  User mode software
+> can use RDTSCP to detect if CPU migration has occurred between successive reads
+> of the TSC.  It can also be used to adjust for per-CPU differences in TSC
+> values in a NUMA system.
+
+Invariant Time Keeping:
+
+> The invariant TSC is based on the invariant timekeeping hardware (called
+> Always Running Timer or ART), that runs at the core crystal clock frequency.
+> The ratio defined by CPUID leaf 15H expresses the frequency relationship
+> between the ART hardware and TSC.  If CPUID.15H:EBX[31:0] != 0 and
+> CPUID.80000007H:EDX[InvariantTSC] = 1, the following linearity relationship
+> holds between TSC and the ART hardware: TSC_Value = (ART_Value *
+> CPUID.15H:EBX[31:0] )/ CPUID.15H:EAX[31:0] + K Where 'K' is an offset that
+> can be adjusted by a privileged agent2.  When ART hardware is reset, both
+> invariant TSC and K are also reset.
 
 ## Licensing
 
