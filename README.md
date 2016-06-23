@@ -70,16 +70,18 @@ Using `CPUID`
 
 For example:
 
-        static inline bool check_rdtscp(void)
-        {
-          unsigned cpu;
-          asm("mov $80000001H, %%rax\n\t"
-              "cpuid\n\t"
-              : "=d"(cpu)
-              :: "%rax", "%rdx"
-              );
-          return ( cpu & (1<<27) );
-        }
+``` .c
+static inline bool check_rdtscp(void)
+{
+  unsigned cpu;
+  asm("mov $80000001H, %%rax\n\t"
+      "cpuid\n\t"
+      : "=d"(cpu)
+      :: "%rax", "%rdx"
+      );
+  return ( cpu & (1<<27) );
+}
+```
 
 TSC Flag:
 
