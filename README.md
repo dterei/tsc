@@ -37,7 +37,7 @@ write up on the issues can be found at the [gotsc][gotsc] project.
 
 ## Converting Cycles to Time
 
-To convert from cycles to wall-clock time we need to know TSC frequency
+To convert from cycles to wall-clock time we need to know TSC frequency.
 Frequency scaling on modern Intel chips doesn't affect the TSC.
 
 Sadly, the only way to determine the TSC frequency appears to be through a MSR
@@ -150,4 +150,5 @@ This library is written and maintained by David Terei, <code@davidterei.com>.
 
 [intel1]: http://www.intel.com/content/www/us/en/embedded/training/ia-32-ia-64-benchmark-code-execution-paper.html
 [gotsc]: https://github.com/dterei/gotsc
+[lxr3]: http://lxr.free-electrons.com/source/arch/x86/kernel/tsc.c#L670
 
