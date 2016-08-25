@@ -21,8 +21,8 @@ static inline uint64_t bench_start(void)
   unsigned  cycles_low, cycles_high;
   asm volatile( "CPUID\n\t" // serialize
                 "RDTSC\n\t" // read clock
-                "mov %%edx, %0\n\t"
-                "mov %%eax, %1\n\t"
+                "MOV %%edx, %0\n\t"
+                "MOV %%eax, %1\n\t"
                 : "=r" (cycles_high), "=r" (cycles_low)
                 :: "%rax", "%rbx", "%rcx", "%rdx" );
   return ((uint64_t) cycles_high << 32) | cycles_low;
@@ -33,8 +33,8 @@ static inline uint64_t bench_end(void)
 {
   unsigned  cycles_low, cycles_high;
   asm volatile( "RDTSCP\n\t" // read clock + serialize
-                "mov %%edx, %0\n\t"
-                "mov %%eax, %1\n\t"
+                "MOV %%edx, %0\n\t"
+                "MOV %%eax, %1\n\t"
                 "CPUID\n\t" // serialze -- but outside clock region!
                 : "=r" (cycles_high), "=r" (cycles_low)
                 :: "%rax", "%rbx", "%rcx", "%rdx" );
